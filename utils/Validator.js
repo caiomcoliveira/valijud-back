@@ -1,55 +1,79 @@
+const Domain = require("./Domain");
 
-exports.isValidProcesso = (processoDoc) => {
-    let isValid = isValidNumeroProcessoDigitoVerificador(processoDoc._doc.dadosBasicos.numero)
-        && isValidDadosBasicos(processoDoc._doc.dadosBasicos)
-        && isValidDataHoraMovimentos(processoDoc._doc.movimento)
-        && isValidTribunal(processoDoc._doc.siglaTribunal)
+exports.isValidProcesso = (processo) => {
+    
+    let isValid = isValidNumeroProcessoDigitoVerificador(processo.dadosBasicos.numero)
+        && isValidRequiredFields(processo)
+        && isValidDataHoraMovimentos(processo.movimento)
+        // && isValidDomain(Domain.TRIBUNAIS, processo.siglaTribunal)
+        && isValidDomain(Domain.GRAUS, processo.grau)
+        && isValidDomain(Domain.CLASSES_PROCESSUAIS, processo.dadosBasicos.classeProcessual)
+        // && isValidDomain(Domain.CODIGOS_IBGE, +processo.dadosBasicos.codigoLocalidade)
+        // && isValidDomain(Domain.CODIGOS_IBGE, +processo.dadosBasicos.orgaoJulgador.codigoMunicipioIBGE)
+
+
         ;
     return isValid;
 }
 
-
-
-const isValidDadosBasicos = (dadosBasicos) => {
-    let isValid = dadosBasicos.dataAjuizamento != undefined
-        && dadosBasicos.dataAjuizamento != undefined
-        && dadosBasicos.numero != undefined
-        && dadosBasicos.dataAjuizamento != undefined
-        && dadosBasicos.classeProcessual != undefined
-        && dadosBasicos.nivelSigilo != undefined
-        && dadosBasicos.codigoLocalidade != undefined
-        && !isNaN(dadosBasicos.codigoLocalidade)
-
-    return isValid;
+const binarySearch = (arr, x, start, end) => {
+    if (start > end) return false;
+    let mid = Math.floor((start + end) / 2);
+    if (arr[mid] === x) return true;
+    if (arr[mid] > x)
+        return recursiveFunction(arr, x, start, mid - 1);
+    else
+        return recursiveFunction(arr, x, mid + 1, end);
 }
 
-const isValidTribunal = (siglaTribunal) => {
-    let siglasValidas = ["STF",
-        "CNJ", "STJ", "TST", "TSE", "STM", "TJAC",
-        "TJAL", "TJAM", "TJAP", "TJBA", "TJCE", "TJDFT",
-        "TJES", "TJGO", "TJMA", "TJMG", "TJMS",  "TJMT", "TJPA", "TJPB", "TJPE", "TJPI", "TJPR", "TJRJ", "TJRN", "TJRO", "TJRR", "TJRS", "TJSC", "TJSE", "TJSP", "TJTO", "TRE-AC",
-        "TRE-AL", "TRE-AM", "TRE-AP", "TRE-BA", "TRE-CE", "TRE-DF", "TRE-ES", "TRE-GO", "TRE-MA", "TRE-MG", "TRE-MS", "TRE-MT", "TRE-PA", "TRE-PB", "TRE-PE", "TRE-PI", "TRE-PR", "TRE-RJ", "TRE-RN", "TRE-RO", "TRE-RR", "TRE-RS", "TRE-SC", "TRE-SE", "TRE-SP", "TRE-TO", "TRF1",
-        "TRF2", "TRF3", "TRF4", "TRF5", "TRT1", "TRT2", "TRT10",
-        "TRT11", "TRT12", "TRT13", "TRT14", "TRT15", "TRT16", "TRT17", "TRT18", "TRT19", "TRT20", "TRT21", "TRT22", "TRT23",
-        "TJMMS","TJMMG",
-    ]
-    return siglasValidas.includes(siglaTribunal);
+
+
+const isValidDomain = (domain, search) => {
+    return domain.includes(search);
+}
+
+
+const isValidRequiredFields = (processo) => {
+    let requiredFields = ['grau', 'siglaTribunal', 'millisInsercao'];
+    for (let f of requiredFields) {
+        if (processo[f] == undefined){
+            return false;
+        }
+    }
+    
+    let requiredFieldsDadosBasicos = ['dataAjuizamento', 'numero', 'classeProcessual', 'nivelSigilo', 'codigoLocalidade'];
+    for (let f of requiredFieldsDadosBasicos) {
+        if (processo.dadosBasicos[f] == undefined){
+            return false;
+        }
+    }
+    return true;
 }
 
 
 const isValidDataHoraMovimentos = (movimentos) => {
+    let ascValid = true;
+    let descValid = true;
     if (movimentos == null)
         return true;
     let movimentosCopy = [...movimentos]
     movimentosCopy.sort((a, b) => (a.dataHora > b.dataHora) ? 1 : -1);
     for (let i = 0; i < movimentosCopy.length; i++) {
-        if (movimentosCopy[i].dataHora != movimentos[i].dataHora)
-            return false;
+        if (movimentosCopy[i].dataHora != movimentos[i].dataHora){
+            ascValid = false;
+        }
     }
-    return true;
+    movimentosCopy.reverse();
+    for (let i = 0; i < movimentosCopy.length; i++) {
+        if (movimentosCopy[i].dataHora != movimentos[i].dataHora){
+            descValid = false;
+        }
+    }
+    return ascValid || descValid;
 }
 
 const isValidNumeroProcessoDigitoVerificador = (numeroProcesso) => {
+    console.log(numeroProcesso);
     const bcmod = (x, y) => {
         const take = 5;
         let mod = '';

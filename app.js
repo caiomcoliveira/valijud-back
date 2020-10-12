@@ -1,6 +1,8 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const async = require('async')
+const cors = require('cors');
+
+
 const processos = require('./routes/processos.router');
 
 require('dotenv/config')
@@ -9,8 +11,9 @@ require('dotenv/config')
 
 const app = express();
 
+app.use(cors());
+app.use('/api/processos', processos);
 
-app.use('/processos', processos);
 
 
 

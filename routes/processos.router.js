@@ -1,32 +1,39 @@
 
 const express = require('express');
-
+const async = require('async')
 const Processo = require('../models/processos');
 const { isValidProcesso } = require('../utils/Validator');
 
 const router = express.Router();
 
-router.route('/').get((req, res) => {
-    Processo.find({}, function (err, result) {
+router.route('').get((req, res) => {
+    let page = +req.query.page - 1;
+    let limit = +req.query.limit;
+    Processo.find({}, async function (err, processos) {
         if (err) {
             res.send(err);
         } else {
-            res.json(result);
+            let totalItems = await Processo.count({});
+            processos.forEach(p => {
+                p._doc.isValid = isValidProcesso(p._doc)
+            }
+            );
+            res.json({ content: processos, totalItems, page, limit });
         }
-    })
-    .limit(5);
+    }).limit(limit).skip(page * limit);
 });
 
 
-router.route('/validar').get( (req, res) => {
+router.get('validar', (req, res) => {
+    
     Processo.find({}, function (err, processos) {
         if (err) {
             res.send(err);
         } else {
             let invalidos = 0;
             async.eachSeries(processos, (processo, next) => {
-                let isValid = isValidProcesso(processo);
-                processo._doc.valid = isValid;
+                let isValid = isValidProcesso(processo._doc);
+                processo._doc.isValid = isValid;
                 if (!isValid) {
                     invalidos++;
                 }
@@ -41,12 +48,12 @@ router.route('/validar').get( (req, res) => {
                 res.json({ razao: `${invalidos} inválidos de ${processos.length}` });
             });
         }
-    });
+    }).limit(10);
 
 });
 
 
-router.route('/invalidos').get( (req, res) => {
+router.get('invalidos', (req, res) => {
     let query = { "valid": false };
     let page = +req.query.page;
     let limit = +req.query.limit;
@@ -62,13 +69,15 @@ router.route('/invalidos').get( (req, res) => {
 })
 
 
-router.route('/numero/:numero').get((req, res) => {
-    Processo.findOne({ "dadosBasicos.numero": req.params['numero'] }, function (err, result) {
+router.route('/numero/:numero').get( (req, res) => {
+    Processo.findOne({ "dadosBasicos.numero": req.params['numero'] }, function (err, processo) {
         if (err) {
             res.send(err);
         } else {
-            result._doc['valid'] = isValidProcesso(result);
-            res.json(result);
+            if(processo._doc){
+                processo._doc['isValid'] = isValidProcesso(processo._doc);
+            }
+            res.json(processo);
         }
     });
 });
