@@ -15,7 +15,7 @@ router.route('').get((req, res) => {
         } else {
             let totalItems = await Processo.count({});
             processos.forEach(p => {
-                p._doc.isValid = isValidProcesso(p._doc)
+                p._doc.errors = isValidProcesso(p._doc)
             }
             );
             res.json({ content: processos, totalItems, page, limit });

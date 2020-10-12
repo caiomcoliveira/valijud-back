@@ -7,7 +7,7 @@ class Domain {
         "TRF2", "TRF3", "TRF4", "TRF5", "TRT1", "TRT2", "TRT10",
         "TRT11", "TRT12", "TRT13", "TRT14", "TRT15", "TRT16", "TRT17", "TRT18", "TRT19", "TRT20", "TRT21", "TRT22", "TRT23",
         "TJMMS", "TJMMG",
-    ]
+    ];
 
     static GRAUS = [
         "G1", "G2", "TR", "JE",
