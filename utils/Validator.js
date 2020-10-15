@@ -1,3 +1,7 @@
+
+
+
+const moment = require("moment");
 const Domain = require("./Domain");
 
 exports.isValidProcesso = (processo) => {
@@ -5,11 +9,16 @@ exports.isValidProcesso = (processo) => {
     errors.push(...isValidNumeroProcessoDigitoVerificador(processo.dadosBasicos.numero));
     errors.push(...isValidRequiredFields(processo));
     errors.push(...isValidDataHoraMovimentos(processo.movimento));
-    errors.push(...isValidDomain(Domain.TRIBUNAIS, processo.siglaTribunal));
-    errors.push(...isValidDomain(Domain.GRAUS, processo.grau));
-    errors.push(...isValidDomain(Domain.CLASSES_PROCESSUAIS, processo.dadosBasicos.classeProcessual));
-    errors.push(...isValidDomain(Domain.CODIGOS_IBGE, +processo.dadosBasicos.codigoLocalidade));
-    errors.push(...isValidDomain(Domain.CODIGOS_IBGE, +processo.dadosBasicos.orgaoJulgador.codigoMunicipioIBGE));
+    errors.push(...isValidDataAjuizamento(processo));
+    // fazer validacao serventia
+    errors.push(...isValidDomain('Sigilo', Domain.SIGILOS, +processo.dadosBasicos.nivelSigilo));
+    errors.push(...isValidDomain('Tribunais', Domain.TRIBUNAIS, processo.siglaTribunal));
+    errors.push(...isValidDomain('Grau', Domain.GRAUS, processo.grau));
+    errors.push(...isValidDomain('Classe Processual', Domain.CLASSES_PROCESSUAIS, processo.dadosBasicos.classeProcessual));
+    errors.push(...isValidDomain('Localidade Dados Básicos', Domain.CODIGOS_IBGE, +processo.dadosBasicos.codigoLocalidade));
+    errors.push(...isValidDomain('Localidade Orgão Julgador', Domain.CODIGOS_IBGE, +processo.dadosBasicos.orgaoJulgador.codigoMunicipioIBGE));
+    errors.push(...isValidDomain('Instância Orgão Julgador', Domain.INSTANCIAS, processo.dadosBasicos.orgaoJulgador.instancia));
+
 
     return errors;
 }
@@ -25,10 +34,21 @@ const binarySearch = (arr, x, start, end) => {
 }
 
 
+const isValidDataAjuizamento = (processo) => {
+    let date = processo.dadosBasicos.dataAjuizamento;
+    let momentDate = null;
+    if(typeof date == "string")
+        momentDate = moment(date, "YYYYMMDDHHmm");
+    else
+        momentDate = moment(date);
+    return momentDate.year() == processo.dadosBasicos.numero.substr(9,4) ? [] : [{severity: 'danger', name: 'Ano de Ajuizamento não condiz com número do processo.'}]
+    
+}
 
-const isValidDomain = (domain, search) => {
+
+const isValidDomain = (nome, domain, search) => {
     if(!domain.includes(search))
-        return[{severity: 'warning', name: 'Fora do domínio'}];
+        return[{severity: 'warning', name: `${nome} Fora do domínio`}];
     return [];
     
 }
@@ -75,7 +95,6 @@ const isValidDataHoraMovimentos = (movimentos) => {
 }
 
 const isValidNumeroProcessoDigitoVerificador = (numeroProcesso) => {
-    console.log(numeroProcesso);
     const bcmod = (x, y) => {
         const take = 5;
         let mod = '';

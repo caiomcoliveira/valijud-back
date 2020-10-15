@@ -6,7 +6,7 @@ class Domain {
         "TRE-AL", "TRE-AM", "TRE-AP", "TRE-BA", "TRE-CE", "TRE-DF", "TRE-ES", "TRE-GO", "TRE-MA", "TRE-MG", "TRE-MS", "TRE-MT", "TRE-PA", "TRE-PB", "TRE-PE", "TRE-PI", "TRE-PR", "TRE-RJ", "TRE-RN", "TRE-RO", "TRE-RR", "TRE-RS", "TRE-SC", "TRE-SE", "TRE-SP", "TRE-TO", "TRF1",
         "TRF2", "TRF3", "TRF4", "TRF5", "TRT1", "TRT2", "TRT10",
         "TRT11", "TRT12", "TRT13", "TRT14", "TRT15", "TRT16", "TRT17", "TRT18", "TRT19", "TRT20", "TRT21", "TRT22", "TRT23",
-        "TJMMS", "TJMMG",
+         "TJMMG", "TJMRS", "TJMSP",
     ];
 
     static GRAUS = [
@@ -22,7 +22,7 @@ class Domain {
         "ADM"
     ]
 
-    static SIGILOS = [0,1,3,4,5];
+    static SIGILOS = [0,1,2,3,4,5];
 
     static TIPOS_DECISAO = [0,1]
 

@@ -7,5 +7,5 @@ const Processos = new mongoose.Schema(
     }
     , { strict: false })
 
-module.exports = mongoose.model('processos', Processos, 'processos')
+module.exports = mongoose.model('processos', Processos)
 

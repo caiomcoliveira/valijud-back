@@ -2,18 +2,23 @@
 const express = require('express');
 const async = require('async')
 const Processo = require('../models/processos');
+
+
 const { isValidProcesso } = require('../utils/Validator');
+const ProcessoValidado = require('../models/ProcessoValidado');
 
 const router = express.Router();
 
+// lista os processos paginados
 router.route('').get((req, res) => {
     let page = +req.query.page - 1;
     let limit = +req.query.limit;
-    Processo.find({}, async function (err, processos) {
+    let query = req.query.numero ? { "dadosBasicos.numero": { $regex: '.*' + req.query.numero + '.*' } } : {}
+    Processo.find(query, async function (err, processos) {
         if (err) {
             res.send(err);
         } else {
-            let totalItems = await Processo.count({});
+            let totalItems = await Processo.countDocuments(query);
             processos.forEach(p => {
                 p._doc.errors = isValidProcesso(p._doc)
             }
@@ -24,8 +29,24 @@ router.route('').get((req, res) => {
 });
 
 
+router.route('').post((req, res) => {
+    ProcessoValidado.findOneAndUpdate({ _id: req.body._id }, req.body, { useFindAndModify: false, upsert: true, new: true },
+        (err, processo) => {
+            if (err) {
+                res.json({ message: "Não foi possível salvar o processo" })
+            }
+            else {
+                res.json(processo);
+            }
+        }
+    );
+
+});
+
+
+
 router.get('validar', (req, res) => {
-    
+
     Processo.find({}, function (err, processos) {
         if (err) {
             res.send(err);
@@ -42,14 +63,12 @@ router.get('validar', (req, res) => {
                 next();
             }, (err) => {
                 if (err) {
-                    console.log(err);
-                    res.send("Deu bosta");
+                    res.json({ message: "Não foi possível validar os processos " });
                 }
                 res.json({ razao: `${invalidos} inválidos de ${processos.length}` });
             });
         }
     }).limit(10);
-
 });
 
 
@@ -61,7 +80,7 @@ router.get('invalidos', (req, res) => {
         if (err) {
             res.send(err);
         } else {
-            let count = await Processo.count(query, function (err, count) {
+            let count = await Processo.countDocuments(query, function (err, count) {
             });
             res.json({ content: result, totalItems: count, page, limit });
         }
@@ -69,18 +88,19 @@ router.get('invalidos', (req, res) => {
 })
 
 
-router.route('/numero/:numero').get( (req, res) => {
+router.route('/numero/:numero').get((req, res) => {
     Processo.findOne({ "dadosBasicos.numero": req.params['numero'] }, function (err, processo) {
         if (err) {
             res.send(err);
         } else {
-            if(processo._doc){
+            if (processo._doc) {
                 processo._doc['isValid'] = isValidProcesso(processo._doc);
             }
             res.json(processo);
         }
     });
 });
+
 
 
 
