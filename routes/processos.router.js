@@ -30,14 +30,18 @@ router.route('').get((req, res) => {
 
 
 router.route('').post(async (req, res) => {
-    pAntes = await Processo.findOne({ _id: req.body._id });
-    await ProcessoAntigo.create({ _id: req.body._id }, (err, p) => {
-        // nao tem problema se nao salvar por duplicado
-    });
+    pAntesSalvo = await ProcessoAntigo.findOne({ _id: req.body._id });
+    if(pAntesSalvo == null){
+        pAntes = await Processo.findOne({ _id: req.body._id });
+        await ProcessoAntigo.create({ ...req.body }, (err, p) => {
+            if(err)
+                res.json({message: 'Error ao salvar cópia do processo original'});
+        });
+    }
     Processo.findOneAndUpdate({ _id: req.body._id }, req.body , {useFindAndModify: false},
         (err, processo) => {
             if (err) {
-                res.json({ message: "Não foi possível salvar o processo" })
+                res.json({ message: "Não foi possível salvar o processo atualizado" })
             }
             else {
                 res.json(processo);
@@ -95,7 +99,7 @@ router.get('invalidos', (req, res) => {
 router.route('/numero/:numero').get((req, res) => {
     Processo.findOne({ "dadosBasicos.numero": req.params['numero'] }, function (err, processo) {
         if (err) {
-            res.send(err);
+            res.status(500).json({message: 'Não foi possível encontrar o processo '});
         } else {
             if (processo._doc) {
                 processo._doc['isValid'] = isValidProcesso(processo._doc);
@@ -104,6 +108,26 @@ router.route('/numero/:numero').get((req, res) => {
         }
     });
 });
+
+
+router.route('/antigo/:numero').get((req, res) => {
+    ProcessoAntigo.findOne({ "dadosBasicos.numero": req.params['numero'] }, function (err, processo) {
+        if (err) {
+            res.status(500).json({message: 'Não foi possível obter o processo Antigo'})
+        } else {
+            if(processo){
+                if (processo._doc) {
+                    processo._doc['isValid'] = isValidProcesso(processo._doc);
+                }
+                res.json(processo);
+            }
+            else {
+                res.status(500).json({message: 'Versão anterior não encontrada.'});
+            }
+        }
+    });
+});
+
 
 
 router.route('/estatisticas').get(async (req,res) => {
