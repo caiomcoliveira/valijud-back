@@ -5,7 +5,7 @@ const Processo = require('../models/processos');
 
 
 const { isValidProcesso } = require('../utils/Validator');
-const ProcessoValidado = require('../models/ProcessoValidado');
+const ProcessoAntigo = require('../models/ProcessoAntigo');
 
 const router = express.Router();
 
@@ -29,8 +29,12 @@ router.route('').get((req, res) => {
 });
 
 
-router.route('').post((req, res) => {
-    ProcessoValidado.findOneAndUpdate({ _id: req.body._id }, req.body, { useFindAndModify: false, upsert: true, new: true },
+router.route('').post(async (req, res) => {
+    pAntes = await Processo.findOne({ _id: req.body._id });
+    await ProcessoAntigo.create({ _id: req.body._id }, (err, p) => {
+        // nao tem problema se nao salvar por duplicado
+    });
+    Processo.findOneAndUpdate({ _id: req.body._id }, req.body , {useFindAndModify: false},
         (err, processo) => {
             if (err) {
                 res.json({ message: "Não foi possível salvar o processo" })
@@ -40,7 +44,7 @@ router.route('').post((req, res) => {
             }
         }
     );
-
+    
 });
 
 
@@ -101,6 +105,23 @@ router.route('/numero/:numero').get((req, res) => {
     });
 });
 
+
+router.route('/estatisticas').get(async (req,res) => {
+    let stats = [];
+    pCount = await Processo.countDocuments({});
+    stats.push({icon: 'paper', label: 'Processo Cadastrados', value: pCount});
+
+
+    
+
+    pCountValid = await Processo.countDocuments({valid: true});
+    stats.push({icon: 'paper', label: 'Processo Validados', value: pCountValid});
+
+    pCountInValid = pCount - pCountValid
+    stats.push({icon: 'paper', label: 'Processo Inválidos', value: pCountInValid});
+
+    res.json(stats);
+});
 
 
 
