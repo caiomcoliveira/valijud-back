@@ -46,8 +46,11 @@ const buildChartOptions = (chartData, chartTitle) => {
         },
         yaxis: {
             title: {
-                text: chartTitle,
+                text: 'Processos',
             },
+        },
+        title: {
+          text: chartTitle  
         },
         fill: {
             type: 'gradient',
@@ -83,7 +86,7 @@ router.route('/kpis').get(async (req, res) => {
 
 router.route('/graficos/grau').get(async (req, res) => {
     let countData = await Processo.aggregate([{ "$group": { _id: { $toUpper: "$grau" }, count: { $sum: 1 } } }, { $sort: { count: -1 } }])
-    res.json(buildChartOptions(countData, 'Processos pro Grau'));
+    res.json(buildChartOptions(countData, 'Processos por Grau'));
 });
 
 router.route('/graficos/classe').get(async (req, res) => {
@@ -94,12 +97,12 @@ router.route('/graficos/classe').get(async (req, res) => {
         countOutros.count += o.count;
     })
     countData = countData.splice(0, 13);
-    res.json(buildChartOptions([...countData, countOutros], 'Processos pro Classe'));
+    res.json(buildChartOptions([...countData, countOutros], 'Processos por Classe'));
 });
 
 router.route('/graficos/instancia').get(async (req, res) => {
     let countData = await Processo.aggregate([{ "$group": { _id: { $toUpper: "$dadosBasicos.orgaoJulgador.instancia" }, count: { $sum: 1 } } }, { $sort: { count: -1 } }])
-    res.json(buildChartOptions(countData, 'Processos pro Instância'));
+    res.json(buildChartOptions(countData, 'Processos por Instância'));
 });
 
 router.route('/graficos/processos-por-tribunal').get(async (req, res) => {
