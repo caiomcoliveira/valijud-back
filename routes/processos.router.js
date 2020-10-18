@@ -4,7 +4,7 @@ const async = require('async')
 const Processo = require('../models/processos');
 
 
-const { isValidProcesso } = require('../utils/Validator');
+const { getErrorsProcesso:  getErrorsProcesso, hasAnyErrorsProcesso } = require('../utils/Validator');
 const ProcessoAntigo = require('../models/ProcessoAntigo');
 
 const router = express.Router();
@@ -20,12 +20,12 @@ router.route('').get((req, res) => {
         } else {
             let totalItems = await Processo.countDocuments(query);
             processos.forEach(p => {
-                p._doc.errors = isValidProcesso(p._doc)
+                p._doc.errors = getErrorsProcesso(p._doc)
             }
             );
             res.json({ content: processos, totalItems, page, limit });
         }
-    }).limit(limit).skip(page * limit);
+    }).limit(limit).skip(page * limit).sort({"errorsCount": -1});
 });
 
 
@@ -38,7 +38,9 @@ router.route('').post(async (req, res) => {
                 res.json({message: 'Error ao salvar cópia do processo original'});
         });
     }
-    Processo.findOneAndUpdate({ _id: req.body._id }, req.body , {useFindAndModify: false, upsert: true},
+    let errorsCount = getErrorsProcesso(req.body).length;
+    let toSave = {...req.body, errorsCount}
+    Processo.findOneAndUpdate({ _id: req.body._id }, toSave , {useFindAndModify: false, upsert: true},
         (err, processo) => {
             if (err) {
                 res.json({ message: "Não foi possível salvar o processo atualizado" })
@@ -55,31 +57,36 @@ router.route('').post(async (req, res) => {
 
 router.get('/validar', (req, res) => {
     let started = new Date();
-    Processo.find({}, function (err, processos) {
+    Processo.find({errorsCount: null}, function (err, processos) {
         if (err) {
             res.send(err);
         } else {
             let invalidos = 0;
-            async.eachLimit(processos, 300, (processo, next) => {
-                let isValid = isValidProcesso(processo._doc);
-                processo._doc.isValid = isValid;
-                if (isValid.length) {
+            async.each(processos, (processo, next) => {
+                let errors = getErrorsProcesso(processo._doc);
+                if (errors.length > 0) {
                     invalidos++;
-                }
-                // let salvar = new Processo(processo)
-                // salvar.save();
-                next();
+                } 
+                Processo.updateOne({_id: processo._id},{$set:{"errorsCount": errors.length}}, (err, p)=> {
+                    if(err){
+                        console.log(err)
+                        res.json({ message: "Não foi possível validar os processos " });
+                    }
+                    else {
+                        next();
+                    }
+                });                
             }, (err) => {
                 if (err) {
                     res.json({ message: "Não foi possível validar os processos " });
                 }
                 else {
                     let ended = new Date()
-                    res.json({ razao: `${invalidos} inválidos de ${processos.length}`, time: (ended - started)/1000 });
+                    res.json({ razao: `${invalidos} inconsistentes de ${processos.length}`, time: (ended - started)/1000 });
                 }
             });
         }
-    });
+    }).limit(1000);
 });
 
 
@@ -100,12 +107,12 @@ router.get('invalidos', (req, res) => {
 
 
 router.route('/numero/:numero').get((req, res) => {
-    Processo.findOne({ "dadosBasicos.numero": req.params['numero'] }, function (err, processo) {
+    Processo.findOne({ "_id": req.params['numero'] }, function (err, processo) {
         if (err) {
             res.status(500).json({message: 'Não foi possível encontrar o processo '});
         } else {
             if (processo._doc) {
-                processo._doc['isValid'] = isValidProcesso(processo._doc);
+                processo._doc['errors'] = getErrorsProcesso(processo._doc);
             }
             res.json(processo);
         }
@@ -113,14 +120,17 @@ router.route('/numero/:numero').get((req, res) => {
 });
 
 
+
+
+
 router.route('/antigo/:numero').get((req, res) => {
-    ProcessoAntigo.findOne({ "dadosBasicos.numero": req.params['numero'] }, function (err, processo) {
+    ProcessoAntigo.findOne({ "_id": req.params['numero'] }, function (err, processo) {
         if (err) {
             res.status(500).json({message: 'Não foi possível obter o processo Antigo'})
         } else {
             if(processo){
                 if (processo._doc) {
-                    processo._doc['isValid'] = isValidProcesso(processo._doc);
+                    processo._doc['errors'] = getErrorsProcesso(processo._doc);
                 }
                 res.json(processo);
             }
