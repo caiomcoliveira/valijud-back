@@ -38,7 +38,7 @@ router.route('').post(async (req, res) => {
                 res.json({message: 'Error ao salvar cópia do processo original'});
         });
     }
-    Processo.findOneAndUpdate({ _id: req.body._id }, req.body , {useFindAndModify: false},
+    Processo.findOneAndUpdate({ _id: req.body._id }, req.body , {useFindAndModify: false, upsert: true},
         (err, processo) => {
             if (err) {
                 res.json({ message: "Não foi possível salvar o processo atualizado" })
@@ -53,30 +53,33 @@ router.route('').post(async (req, res) => {
 
 
 
-router.get('validar', (req, res) => {
-
+router.get('/validar', (req, res) => {
+    let started = new Date();
     Processo.find({}, function (err, processos) {
         if (err) {
             res.send(err);
         } else {
             let invalidos = 0;
-            async.eachSeries(processos, (processo, next) => {
+            async.eachLimit(processos, 300, (processo, next) => {
                 let isValid = isValidProcesso(processo._doc);
                 processo._doc.isValid = isValid;
-                if (!isValid) {
+                if (isValid.length) {
                     invalidos++;
                 }
-                let salvar = new Processo(processo)
-                salvar.save();
+                // let salvar = new Processo(processo)
+                // salvar.save();
                 next();
             }, (err) => {
                 if (err) {
                     res.json({ message: "Não foi possível validar os processos " });
                 }
-                res.json({ razao: `${invalidos} inválidos de ${processos.length}` });
+                else {
+                    let ended = new Date()
+                    res.json({ razao: `${invalidos} inválidos de ${processos.length}`, time: (ended - started)/1000 });
+                }
             });
         }
-    }).limit(10);
+    });
 });
 
 
@@ -128,24 +131,6 @@ router.route('/antigo/:numero').get((req, res) => {
     });
 });
 
-
-
-router.route('/estatisticas').get(async (req,res) => {
-    let stats = [];
-    pCount = await Processo.countDocuments({});
-    stats.push({icon: 'paper', label: 'Processo Cadastrados', value: pCount});
-
-
-    
-
-    pCountValid = await Processo.countDocuments({valid: true});
-    stats.push({icon: 'paper', label: 'Processo Validados', value: pCountValid});
-
-    pCountInValid = pCount - pCountValid
-    stats.push({icon: 'paper', label: 'Processo Inválidos', value: pCountInValid});
-
-    res.json(stats);
-});
 
 
 

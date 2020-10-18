@@ -6,11 +6,11 @@ const Domain = require("./Domain");
 
 exports.isValidProcesso = (processo) => {
     let errors = [];
-    errors.push(...isValidNumeroProcessoDigitoVerificador(processo.dadosBasicos.numero));
-    errors.push(...isValidRequiredFields(processo));
-    errors.push(...isValidDataHoraMovimentos(processo.movimento));
+    // errors.push(...isValidNumeroProcessoDigitoVerificador(processo.dadosBasicos.numero));
+    // errors.push(...isValidRequiredFields(processo));
+    // errors.push(...isValidDataHoraMovimentos(processo.movimento));
     errors.push(...isValidDataAjuizamento(processo));
-    // fazer validacao serventia
+    // // fazer validacao serventia
     errors.push(...isValidDomain('Sigilo', Domain.SIGILOS, +processo.dadosBasicos.nivelSigilo));
     errors.push(...isValidDomain('Tribunais', Domain.TRIBUNAIS, processo.siglaTribunal));
     errors.push(...isValidDomain('Grau', Domain.GRAUS, processo.grau));

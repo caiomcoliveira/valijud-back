@@ -5,6 +5,7 @@ const bodyParser = require('body-parser')
 
 
 const processos = require('./routes/processos.router');
+const dashboard = require('./routes/dashboard.router');
 
 require('dotenv/config')
 
@@ -16,6 +17,8 @@ app.use(cors());
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 app.use('/api/processos', processos);
+app.use('/api/dashboard', dashboard);
+
 
 
 
