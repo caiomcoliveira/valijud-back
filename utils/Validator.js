@@ -6,18 +6,18 @@ const Domain = require("./Domain");
 
 exports.getErrorsProcesso = (processo) => {
     let errors = [];
-    errors.push(...isValidNumeroProcessoDigitoVerificador(processo.dadosBasicos.numero));
-    errors.push(...isValidRequiredFields(processo));
-    errors.push(...isValidAssuntoMovimento(processo));
-    errors.push(...isValidDataAjuizamento(processo));
-    // errors.push(...isValidDataHoraMovimentos(processo.movimento));
-    errors.push(...isValidDomain('Sigilo', Domain.SIGILOS, +processo.dadosBasicos.nivelSigilo));
+    errors.push(...isValidNumeroProcessoDigitoVerificador(processo.dadosBasicos.numero)); // digito verificar do processo
+    errors.push(...isValidRequiredFields(processo)); // verificar dados obrigatorios
+    errors.push(...isValidAssuntoMovimento(processo)); // verificar se tem assunto e/ou movimento
+    errors.push(...isValidDataAjuizamento(processo)); // ano da data ajuizamento bate com processo
+    errors.push(...isValidDataHoraMovimentos(processo.movimento)); // movimento em ordem descrecente de data
+    errors.push(...isValidDomain('Sigilo', Domain.SIGILOS, +processo.dadosBasicos.nivelSigilo)); 
     errors.push(...isValidDomain('Tribunais', Domain.TRIBUNAIS, processo.siglaTribunal));
     errors.push(...isValidDomain('Grau', Domain.GRAUS, processo.grau));
     errors.push(...isValidDomain('Classe Processual', Domain.CLASSES_PROCESSUAIS, processo.dadosBasicos.classeProcessual));
     errors.push(...isValidDomain('Instância Orgão Julgador', Domain.INSTANCIAS, processo.dadosBasicos.orgaoJulgador.instancia));
     // errors.push(...isValidDomain('Localidade Dados Básicos', Domain.CODIGOS_IBGE, +processo.dadosBasicos.codigoLocalidade));
-    // errors.push(...isValidDomain('Localidade Orgão Julgador', Domain.CODIGOS_IBGE, +processo.dadosBasicos.orgaoJulgador.codigoMunicipioIBGE));
+    errors.push(...isValidDomain('Localidade Orgão Julgador', Domain.CODIGOS_IBGE, +processo.dadosBasicos.orgaoJulgador.codigoMunicipioIBGE));
 
 
     return errors;
@@ -45,8 +45,8 @@ exports.hasAnyErrorsProcesso = (processo) => {
         return true;
     // if(isValidDomain('Localidade Dados Básicos', Domain.CODIGOS_IBGE, +processo.dadosBasicos.codigoLocalidade).length > 0) 
     // return true;
-    // if(isValidDomain('Localidade Orgão Julgador', Domain.CODIGOS_IBGE, +processo.dadosBasicos.orgaoJulgador.codigoMunicipioIBGE).length > 0) 
-    // return true;
+    if(isValidDomain('Localidade Orgão Julgador', Domain.CODIGOS_IBGE, +processo.dadosBasicos.orgaoJulgador.codigoMunicipioIBGE).length > 0) 
+        return true;
     // if(isValidDataHoraMovimentos(processo.movimento).length > 0) 
     // return true;
 

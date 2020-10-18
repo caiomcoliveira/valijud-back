@@ -57,7 +57,7 @@ router.route('').post(async (req, res) => {
 
 router.get('/validar', (req, res) => {
     let started = new Date();
-    Processo.find({errorsCount: null}, function (err, processos) {
+    Processo.find({errorsCount: -1}, function (err, processos) {
         if (err) {
             res.send(err);
         } else {
@@ -86,7 +86,7 @@ router.get('/validar', (req, res) => {
                 }
             });
         }
-    }).limit(1000);
+    }).limit(10000);
 });
 
 

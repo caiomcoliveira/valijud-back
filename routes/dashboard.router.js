@@ -70,11 +70,12 @@ router.route('/kpis').get(async (req, res) => {
     pCount = await Processo.countDocuments({});
     stats.push({ icon: 'paper-add', label: 'Processo Cadastrados', value: pCount });
 
-    pCountInValid = await Processo.countDocuments({ $or: [{ errorsCount: { $gte: 1 } }, { errorsCount: null }]});
-    stats.push({ icon: 'paper-times', label: 'Processos Inconsistentes', value: pCountInValid });
-
-    pCountValid = pCount - pCountInValid;
+    pCountValid =  await Processo.countDocuments({ errorsCount:  0  });
     stats.push({ icon: 'paper-check', label: 'Processos Validados', value: pCountValid });
+
+    pCountInValid =  pCount - pCountValid;
+    stats.push({ icon: 'paper-times', label: 'Processos Inconsistentes/Não Validados', value: pCountInValid });
+
 
 
     res.json(stats);
