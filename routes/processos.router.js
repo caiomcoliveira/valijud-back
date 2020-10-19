@@ -13,7 +13,7 @@ const router = express.Router();
 router.route('').get((req, res) => {
     let page = +req.query.page - 1;
     let limit = +req.query.limit;
-    let query = req.query.numero ? { "dadosBasicos.numero": { $regex: '.*' + req.query.numero + '.*' } } : {}
+    let query = req.query.numero ? { "dadosBasicos.numero": { $regex: '.*' + req.query.numero.replace(/[.-]/g, '') + '.*' } } : {}
     Processo.find(query, async function (err, processos) {
         if (err) {
             res.send(err);
@@ -86,7 +86,7 @@ router.get('/validar', (req, res) => {
                 }
             });
         }
-    }).limit(10000);
+    }).limit(1000);
 });
 
 

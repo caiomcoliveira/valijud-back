@@ -2,6 +2,7 @@
 
 
 const moment = require("moment");
+const { JULGAMENTOS } = require("./Domain");
 const Domain = require("./Domain");
 
 exports.getErrorsProcesso = (processo) => {
@@ -11,7 +12,8 @@ exports.getErrorsProcesso = (processo) => {
     errors.push(...isValidAssuntoMovimento(processo)); // verificar se tem assunto e/ou movimento
     errors.push(...isValidDataAjuizamento(processo)); // ano da data ajuizamento bate com processo
     errors.push(...isValidDataHoraMovimentos(processo.movimento)); // movimento em ordem descrecente de data
-    errors.push(...isValidDomain('Sigilo', Domain.SIGILOS, +processo.dadosBasicos.nivelSigilo)); 
+    errors.push(...isValidBaixaJulgamento(processo));
+    errors.push(...isValidDomain('Sigilo', Domain.SIGILOS, +processo.dadosBasicos.nivelSigilo));
     errors.push(...isValidDomain('Tribunais', Domain.TRIBUNAIS, processo.siglaTribunal));
     errors.push(...isValidDomain('Grau', Domain.GRAUS, processo.grau));
     errors.push(...isValidDomain('Classe Processual', Domain.CLASSES_PROCESSUAIS, processo.dadosBasicos.classeProcessual));
@@ -24,57 +26,42 @@ exports.getErrorsProcesso = (processo) => {
 }
 
 
-exports.hasAnyErrorsProcesso = (processo) => {
-    if (isValidNumeroProcessoDigitoVerificador(processo.dadosBasicos.numero).length > 0)
-        return true;
-    if (isValidRequiredFields(processo).length > 0)
-        return true;
-    if (isValidAssuntoMovimento(processo).length > 0)
-        return true;
-    if (isValidDataAjuizamento(processo).length > 0)
-        return true;    
-    if (isValidDomain('Sigilo', Domain.SIGILOS, +processo.dadosBasicos.nivelSigilo).length > 0)
-        return true;
-    if (isValidDomain('Tribunais', Domain.TRIBUNAIS, processo.siglaTribunal).length > 0)
-        return true;
-    if (isValidDomain('Grau', Domain.GRAUS, processo.grau).length > 0)
-        return true;
-    if (isValidDomain('Classe Processual', Domain.CLASSES_PROCESSUAIS, processo.dadosBasicos.classeProcessual).length > 0)
-        return true;
-    if (isValidDomain('Instância Orgão Julgador', Domain.INSTANCIAS, processo.dadosBasicos.orgaoJulgador.instancia).length > 0)
-        return true;
-    // if(isValidDomain('Localidade Dados Básicos', Domain.CODIGOS_IBGE, +processo.dadosBasicos.codigoLocalidade).length > 0) 
-    // return true;
-    if(isValidDomain('Localidade Orgão Julgador', Domain.CODIGOS_IBGE, +processo.dadosBasicos.orgaoJulgador.codigoMunicipioIBGE).length > 0) 
-        return true;
-    // if(isValidDataHoraMovimentos(processo.movimento).length > 0) 
-    // return true;
 
 
-    return false;
+
+const isValidBaixaJulgamento = (processo) => {
+    if (!processo.movimento)
+        return [];
+    let movimentosCopy = [...processo.movimento]
+    movimentosCopy.sort((a, b) => (a.dataHora > b.dataHora) ? -1 : 1);
+    let codigosMovimentos = movimentosCopy.map(mov => {
+        if (mov.movimentoNacional) {
+            return mov.movimentoNacional.codigoNacional
+        }
+        if (mov.movimentoLocal) {
+            return mov.movimentoLocal.codigoPaiNacional
+        }
+    }
+    );
+    let baixaIndex = codigosMovimentos.indexOf(Domain.BAIXA_DEFINITIVA);
+    if (baixaIndex == codigosMovimentos.length - 1) {
+        return [{ severity: 'danger', name: 'Processo Baixado sem Julgamento' }]
+    }
+    if (baixaIndex != -1) {
+        if (!Domain.JULGAMENTOS.includes(codigosMovimentos[baixaIndex + 1])) {
+            return [{ severity: 'danger', name: 'Processo Baixado sem Julgamento' }]
+        }
+    }
+    return []
 }
-
-
-
-
-const binarySearch = (arr, x, start, end) => {
-    if (start > end) return false;
-    let mid = Math.floor((start + end) / 2);
-    if (arr[mid] === x) return true;
-    if (arr[mid] > x)
-        return recursiveFunction(arr, x, start, mid - 1);
-    else
-        return recursiveFunction(arr, x, mid + 1, end);
-}
-
 
 const isValidDataAjuizamento = (processo) => {
     let date = processo.dadosBasicos.dataAjuizamento;
     let momentDate = null;
-    if (typeof date == "string"){
+    if (typeof date == "string") {
         momentDate = moment(date, "YYYYMMDDHHmm");
     }
-    else{
+    else {
         momentDate = moment(date);
     }
     return momentDate.year() == processo.dadosBasicos.numero.substr(9, 4) ? [] : [{ severity: 'danger', name: 'Ano de Ajuizamento não condiz com número do processo.' }]

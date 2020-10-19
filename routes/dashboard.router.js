@@ -77,7 +77,7 @@ router.route('/kpis').get(async (req, res) => {
     stats.push({ icon: 'paper-check', label: 'Processos Validados', value: pCountValid });
 
     pCountInValid =  pCount - pCountValid;
-    stats.push({ icon: 'paper-times', label: 'Processos Inconsistentes/Não Validados', value: pCountInValid });
+    stats.push({ icon: 'paper-times', label: 'Processos Inconsistentes', value: pCountInValid });
 
 
 
