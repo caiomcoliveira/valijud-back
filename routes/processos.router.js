@@ -71,7 +71,7 @@ router.route('').post(async (req, res) => {
 
 router.get('/validar', (req, res) => {
     let started = new Date();
-    Processo.find({ errorsCount: -1 }, function (err, processos) {
+    Processo.find({$or: [{ errorsCount: -1 }, { errorsCount: null}]}, function (err, processos) {
         if (err) {
             res.send(err);
         } else {
@@ -100,12 +100,12 @@ router.get('/validar', (req, res) => {
                 }
             });
         }
-    }).limit(1000);
+    }).limit(3000);
 });
 
 
-router.get('invalidos', (req, res) => {
-    let query = { "valid": false };
+router.get('/invalidos', (req, res) => {
+    let query = { errorsCount: {$gte: 1} };
     let page = +req.query.page;
     let limit = +req.query.limit;
     Processo.find(query, async function (err, result) {

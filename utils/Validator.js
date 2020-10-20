@@ -2,7 +2,6 @@
 
 
 const moment = require("moment");
-const { JULGAMENTOS } = require("./Domain");
 const Domain = require("./Domain");
 
 exports.getErrorsProcesso = (processo) => {
