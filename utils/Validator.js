@@ -44,7 +44,7 @@ const isValidBaixaJulgamento = (processo) => {
     }
     );
     let baixaIndex = codigosMovimentos.indexOf(Domain.BAIXA_DEFINITIVA);
-    if (baixaIndex == codigosMovimentos.length - 1) {
+    if (baixaIndex != -1 && baixaIndex == codigosMovimentos.length - 1) {
         return [{ severity: 'danger', name: 'Processo Baixado sem Julgamento' }]
     }
     if (baixaIndex != -1) {
