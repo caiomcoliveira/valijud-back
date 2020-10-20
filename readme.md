@@ -22,6 +22,12 @@ Para marcar todos, execute no mongo:
  db.processos.update({errorsCount: null}, {errorsCount: -1}, {multi: true})
 ```
 
+conexão via mongo shell
+```
+mongo "mongodb+srv://hackaton.5yjsd.gcp.mongodb.net/valijud" --username hackaton
+``` 
+Senha: hackaton
+
 (Não se esqueça de popular a base antes.)
 
 
@@ -35,9 +41,9 @@ npm install
 npm start
 ```
 
-## Endpoints
+# Endpoints
 
-# Processos
+## Processos
 **GET /api/processos**
 
 Lista os processos de forma paginada, necessário passar os query params de page e limit.
@@ -70,7 +76,7 @@ Retorna o processo anterior a alteração de ID(do mongo) do parametro
 
 Retorna o processo anterior a alteração de ID(do mongo) do parametro 
 
-# Dashboard
+## Dashboard
 
 **GET /api/dashboard/kpis**
 
@@ -83,8 +89,15 @@ Lista os 3 principais KPIS
 Monta um dos 3 gráficos agrupadores
 
 
-## Validação
+# Validação
 
 As validações estarão em utils/Validator.js
 
-Nele se encontra as validações que são feitas para levaar ao front-end e também validar na base.
+Nele se encontra as validações que são feitas para levar ao front-end e também validar na base.
+
+
+# Importação
+
+Foram importados 1 arquivo json de cada tribunal de cada região. O script python permite a importação de todos, no entanto limitamos a 400mb por conta de armazenamento e fins demonstrativos.
+
+Basta rodar o script python na raiz que tiverem os arquivos JSON
